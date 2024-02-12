@@ -11,6 +11,7 @@ import {
   DialogTitle,
   Grid,
   IconButton,
+  InputAdornment,
   Popover,
   Table,
   TableBody,
@@ -18,6 +19,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -31,8 +33,18 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ShareIcon from "@mui/icons-material/Share";
+import axios from "axios";
+import SignIn from "../../Assets/Svg/SignUp.png";
+import Logo from "../../Components/Logo";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const LandingPage = () => {
+  const [formData, setFormData] = useState({
+    componentState: "SignIn",
+    signInEmail: "",
+    signInPassword: "",
+    showPassword: false,
+  });
   // menu
   const [activeMenuItem, setActiveMenuItem] = useState("Home");
   const menuItems = [
@@ -148,284 +160,202 @@ const LandingPage = () => {
   };
 
   const handleCloseDbox = () => {
+    setFormData({
+      ...formData,
+      selectedFile: null,
+    });
     setOpenDbox(false);
   };
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    // Upload the file and update formData
+    setFormData({
+      ...formData,
+      selectedFile: file,
+    });
+    console.log("File uploaded:", file.name);
+    // setOpenDbox(false);
+  };
 
-  const handleFileUpload = (event) => {
-    // Handle file upload logic here
-    console.log("File uploaded:", event.target.files[0]);
-    setOpenDbox(false);
+  const handleFileUpload = async () => {
+    try {
+      const response = await axios.post(
+        "https://g6r85zr2hi.execute-api.us-east-1.amazonaws.com/prod/file-upload",
+        formData
+      );
+
+      // Handle success
+      setFormData({
+        ...formData,
+        selectedFile: null,
+      });
+      console.log("File Uploaded Successfully");
+    } catch (error) {
+      // Handle error
+      console.error("File Upload Error:", error);
+    }
+  };
+
+  // Handle the Changes in the Sign In form
+  const handleChangeSignIn = (event) => {
+    const { name, value } = event.target;
+    setFormData({ ...formData, [name]: value });
+    console.log(name, value);
+  };
+
+  // Show password button handle
+  const handleClickShowPassword = () => {
+    setFormData({ ...formData, showPassword: !formData.showPassword });
+  };
+  const handleMouseDownPassword = (event) => {
+    event.preventDefault();
+  };
+
+  // Sign In Function
+  const signIn = () => {
+    console.log("Sign In Clicked!");
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <NavBar />
-
-      <Grid container sx={{ paddingLeft: 5, paddingRight: 5, marginTop: 8 }}>
-        {/* Add New Button Grid */}
+    <div class="h-screen flex justify-center items-center border-r-400">
+      {/* Outer White background div */}
+      <div class="h-[90vh] w-[90%] bg-white my-auto rounded-3xl">
+        {/* Content Grid */}
         <Grid
-          item
-          xs={3}
-          sx={{
-            position: "fixed",
-            top: 70,
-            bottom: 0,
-            left: 15,
-            backgroundColor: "#ffffff",
-            overflowY: "auto",
-            zIndex: 1,
-            padding: "20px",
+          container
+          style={{
+            width: "98%",
+            height: "96%",
+            margin: "auto",
+            marginTop: "0.8%",
           }}
         >
-          {/* Add New Button */}
-          <Button
-            variant="contained"
-            color="primary"
+          {/* Form Grid */}
+          <Grid
+            item
+            xs={6}
             style={{
-              borderRadius: "20px",
-              padding: "10px 20px",
-              width: "140px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
             }}
-            startIcon={<AddIcon />}
-            onClick={handleOpenDbox}
           >
-            Add New
-          </Button>
-          {/* Menu List */}
-          <div style={{ marginTop: 50 }}>
-            {menuItems.map((menuItem) => (
-              <div
-                key={menuItem.label}
-                onClick={() => handleMenuItemClick(menuItem.label)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  cursor: "pointer",
-                  padding: "10px",
-                  position: "relative",
-                }}
-              >
-                {/* Separate Line */}
-                <div
+            <div className="flex flex-col justify-center items-center">
+              {/* Drive Logo */}
+              <div>
+                <Logo />
+              </div>
+              <div>
+                <p className="mt-4 text-3xl font-Poppins-Regular">
+                  Welcome Again
+                </p>
+              </div>
+              {/* E mail Field */}
+              <div className="w-[320px]">
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="E Mail"
+                  name="signInEmail"
+                  value={formData.signInEmail}
+                  onChange={handleChangeSignIn}
                   style={{
-                    position: "absolute",
-                    left: 0,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    height: "20px", // Height of the line
-                    width: "4px", // Width of the line
-                    backgroundColor:
-                      activeMenuItem === menuItem.label ? "#0087CC" : "#FFFFFF", // Color of the line
+                    width: "100%",
+                    marginTop: "16px",
+                    fontSize: "1.875rem",
                   }}
-                ></div>
-
-                {/* Icon */}
-                {React.cloneElement(menuItem.icon, {
-                  style: { color: "#0087CC" },
-                })}
-
-                {/* Label */}
-                <span style={{ marginLeft: "10px" }}>{menuItem.label}</span>
-              </div>
-            ))}
-          </div>
-          {/* File Upload Dialog */}
-          <Dialog open={openDbox} onClose={handleCloseDbox}>
-            <DialogTitle sx={{ textAlign: "center" }}>File Upload</DialogTitle>
-            <DialogContent>
-              <DialogContentText>
-                To upload a file, click the "Browse" button below.
-              </DialogContentText>
-              <div style={{ textAlign: "center" }}>
-                <input
-                  type="file"
-                  id="file-upload"
-                  style={{ display: "none", textAlign: "center" }}
-                  onChange={handleFileUpload}
                 />
-                <label htmlFor="file-upload">
-                  <Button
-                    variant="contained"
-                    component="span"
-                    color="primary"
-                    style={{ marginTop: "30px" }}
-                  >
-                    Browse
-                  </Button>
-                </label>
               </div>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseDbox} color="primary">
-                Cancel
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </Grid>
-        {/* Menu Item Grid*/}
-        <Grid item xs={2}></Grid>
-        <Grid item xs={10}>
-          <TableContainer style={{ width: "100%", paddingTop: "116px" }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell style={{ width: "55%" }}>Name</TableCell>
-                  <TableCell style={{ width: "15%" }}></TableCell>{" "}
-                  {/* Empty column */}
-                  <TableCell style={{ width: "15%" }}>Date</TableCell>
-                  <TableCell style={{ width: "10%" }}>Size</TableCell>
-                  <TableCell style={{ width: "5%" }}></TableCell>{" "}
-                  {/* Empty column */}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {activeMenuData.map((row) => (
-                  <TableRow key={row.name} style={{ position: "relative" }}>
-                    <TableCell>{row.name}</TableCell>
-                    <TableCell>
-                      {activeMenuItem === "Home" && (
-                        <>
-                          {/* IconButton 1: Three Dots */}
-                          <Tooltip title="More Options" arrow>
-                            <IconButton
-                              onClick={(e) => handleThreeDotsClick(e, row)}
-                            >
-                              <MoreVertIcon />
-                            </IconButton>
-                          </Tooltip>
-                          {/* IconButton 2: Favorite */}
-                          <Tooltip title="Add to Favorites" arrow>
-                            <IconButton
-                              onClick={() => handleFavoriteClick(row)}
-                            >
-                              <FavoriteBorderOutlinedIcon />
-                            </IconButton>
-                          </Tooltip>
-                          {/* IconButton 3: Delete */}
-                          <Tooltip title="Delete" arrow>
-                            <IconButton onClick={() => handleDeleteClick(row)}>
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </>
-                      )}
-                      {activeMenuItem === "Favorite" && (
-                        <>
-                          {/* IconButton 1: Three Dots */}
-                          <Tooltip title="More Options" arrow>
-                            <IconButton
-                              onClick={(e) => handleThreeDotsClick(e, row)}
-                            >
-                              <MoreVertIcon />
-                            </IconButton>
-                          </Tooltip>
-                          {/* IconButton 2: Favorite */}
-                          <Tooltip title="Remove from the Favorites" arrow>
-                            <IconButton
-                              onClick={() => handleFavoriteClick(row)}
-                            >
-                              <FavoriteIcon />
-                            </IconButton>
-                          </Tooltip>
-                          {/* IconButton 3: Delete */}
-                          <Tooltip title="Delete" arrow>
-                            <IconButton onClick={() => handleDeleteClick(row)}>
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </>
-                      )}
-                      {activeMenuItem === "Recycle Bin" && (
-                        <>
-                          {/* IconButton 1: Restore */}
-                          <Tooltip title="Restore" arrow>
-                            <IconButton onClick={() => handleRestoreClick(row)}>
-                              <RestoreIcon />
-                            </IconButton>
-                          </Tooltip>
-                          {/* IconButton 2: Delete */}
-                          <Tooltip title="Delete Permanently" arrow>
-                            <IconButton
-                              onClick={() => handleDeletePermanentlyClick(row)}
-                            >
-                              <DeleteForeverIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </>
-                      )}
-                    </TableCell>
-                    <TableCell>{row.date}</TableCell>
-                    <TableCell>{row.size}</TableCell>
-                    {/* Popover for more options */}
-                    <Popover
-                      open={Boolean(anchorEl)}
-                      anchorEl={anchorEl}
-                      onClose={handleClosePopover}
-                      anchorOrigin={{
-                        vertical: "bottom",
-                        horizontal: "right",
-                      }}
-                      transformOrigin={{
-                        vertical: "top",
-                        horizontal: "right",
-                      }}
-                      PaperProps={{
-                        style: {
-                          boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)", // Customize the box shadow here
-                        },
-                      }}
-                    >
-                      <div
-                        style={{
-                          paddingLeft: "10px",
-                          paddingTop: "20px",
-                          paddingRight: "10px",
-                          paddingBottom: "20px",
-                          width: "200px",
-                        }}
-                      >
-                        <Typography
-                          variant="body1"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            cursor: "pointer",
-                            paddingLeft: "10px",
-                            paddingTop: "5px",
-                            paddingRight: "10px",
-                            paddingBottom: "15px",
-                          }}
-                          onClick={() => handleOpenClick(row)}
+              {/* Password Field */}
+              <div className="w-[320px]">
+                <TextField
+                  fullWidth
+                  size="small"
+                  type={formData.showPassword ? "text" : "password"}
+                  label="Password"
+                  name="signInPassword"
+                  value={formData.signInPassword}
+                  onChange={handleChangeSignIn}
+                  style={{
+                    width: "100%",
+                    marginTop: "14px",
+                    fontSize: "1.875rem",
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={handleClickShowPassword}
+                          onMouseDown={handleMouseDownPassword}
                         >
-                          <OpenInNewIcon style={{ marginRight: "8px" }} />
-                          Open
-                        </Typography>
-                        <Typography
-                          variant="body1"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            cursor: "pointer",
-                            paddingLeft: "10px",
-                            // paddingTop: "15px",
-                            paddingRight: "10px",
-                            paddingBottom: "5px",
-                          }}
-                          onClick={() => handleShareClick(row)}
-                        >
-                          <ShareIcon style={{ marginRight: "8px" }} />
-                          Share
-                        </Typography>
-                      </div>
-                    </Popover>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                          {formData.showPassword ? (
+                            <VisibilityOff style={{ fontSize: "medium" }} />
+                          ) : (
+                            <Visibility style={{ fontSize: "medium" }} />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </div>
+              {/* Forgot Password */}
+              <div>
+                <p className="my-4 text-[12px] font-Poppins-Regular">
+                  Forgot Password ?
+                </p>
+              </div>
+              {/* Sign In button */}
+              <div className="w-[320px]">
+                <Button
+                  size="small"
+                  variant="contained"
+                  style={{
+                    width: "100%",
+                    backgroundColor: "#1E1F6F",
+                    color: "#FFFFFF",
+                  }}
+                  onClick={signIn}
+                >
+                  Sign In
+                </Button>
+              </div>
+              {/* Sign Up Button */}
+              <div>
+                <p
+                  className="mt-4 text-[12px] font-Poppins-Regular cursor-pointer"
+                  onClick={() =>
+                    setFormData({ ...formData, componentState: "SignUp" })
+                  }
+                >
+                  Don’t have an account yet? Sign Up
+                </p>
+              </div>
+            </div>
+          </Grid>
+
+          {/* SVG Grid */}
+          <Grid
+            item
+            xs={6}
+            style={{
+              backgroundColor: "#E6F2FF",
+              borderRadius: "1.5rem",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            {/* Use the imported SVG */}
+            <img
+              src={SignIn}
+              alt="Sign In SVG"
+              style={{ width: "400px", height: "400px" }}
+            />
+          </Grid>
         </Grid>
-      </Grid>
-    </ThemeProvider>
+      </div>
+    </div>
   );
 };
 
