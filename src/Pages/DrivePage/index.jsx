@@ -10,6 +10,7 @@ import FileBar from "../../Components/FileBar";
 import Loader from "../../Components/Loader";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 
 const DrivePage = () => {
   const [formData, setFormData] = useState({
@@ -47,10 +48,44 @@ const DrivePage = () => {
         starred: true,
         trash: true,
       },
+      {
+        id: 5,
+        name: "Distributed Systems",
+        date: "5th January",
+        size: "7 MB",
+        starred: false,
+        trash: false,
+      },
+      {
+        id: 6,
+        name: "Information Technology",
+        date: "12th February",
+        size: "12 MB",
+        starred: true,
+        trash: false,
+      },
+      {
+        id: 7,
+        name: "Management Studies",
+        date: "28th March",
+        size: "11 MB",
+        starred: false,
+        trash: true,
+      },
+      {
+        id: 8,
+        name: "MOT",
+        date: "3rd December",
+        size: "3 MB",
+        starred: true,
+        trash: true,
+      },
     ],
     loader: false,
     uploadedFile: null,
   });
+  const navigate = useNavigate();
+
   //   Handle the add files dialog box
   const [showModal, setShowModal] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
@@ -108,6 +143,47 @@ const DrivePage = () => {
     // load api with starred and trash booleans
   };
 
+  useEffect(() => {
+    // Check if access token is available in localStorage
+    const accessToken = localStorage.getItem("Access_Token");
+
+    // If access token is not available, navigate to "/" page
+    if (!accessToken) {
+      navigate("/");
+    } else {
+      console.log("Access Token", accessToken);
+      setSearchResults(formData.files);
+    }
+  }, []);
+
+  // Log Out function
+  const logOut = () => {
+    // Remove the token from localStorage
+    localStorage.removeItem("Access_Token");
+    navigate("/");
+  };
+
+  // Search Function
+  const [searchInput, setSearchInput] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const handleSearchInputChange = (e) => {
+    setSearchInput(e.target.value);
+    // Call your search function here
+    searchFiles(e.target.value);
+  };
+
+  const searchFiles = (searchTerm) => {
+    if (searchTerm.trim() === "") {
+      // If search term is empty, show all files
+      setSearchResults(formData.files);
+    } else {
+      // Otherwise, filter files based on search term
+      const filteredFiles = formData.files.filter((file) => {
+        return file.name.toLowerCase().includes(searchTerm.toLowerCase());
+      });
+      setSearchResults(filteredFiles);
+    }
+  };
   return (
     <div
       className="relative min-h-screen h-auto"
@@ -205,6 +281,9 @@ const DrivePage = () => {
               <InputBase
                 sx={{ ml: 1, flex: 1, fontSize: "12px" }}
                 placeholder="Search Files"
+                type="text"
+                value={searchInput}
+                onChange={handleSearchInputChange}
               />
               <IconButton type="button" sx={{ p: "6px" }}>
                 <SearchIcon sx={{ fontSize: "18px" }} />
@@ -392,6 +471,7 @@ const DrivePage = () => {
                       backgroundColor: "#1E1F6F",
                       color: "#FFFFFF",
                     }}
+                    onClick={logOut}
                   >
                     Log Out
                   </Button>
@@ -422,8 +502,8 @@ const DrivePage = () => {
               <Loader />
             ) : (
               <>
-                {formData.files &&
-                  formData.files.map((file) => (
+                {searchResults &&
+                  searchResults.map((file) => (
                     <FileBar
                       key={file.id}
                       id={file.id}

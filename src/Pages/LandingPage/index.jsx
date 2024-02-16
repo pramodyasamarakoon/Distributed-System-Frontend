@@ -1,38 +1,11 @@
 import React, { useState } from "react";
-import NavBar from "../../Components/NavBar";
-import { ThemeProvider } from "styled-components";
-import theme from "../../theme";
 import {
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Grid,
   IconButton,
   InputAdornment,
-  Popover,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
-  Tooltip,
-  Typography,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import HomeIcon from "@mui/icons-material/Home";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import DeleteIcon from "@mui/icons-material/Delete";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import RestoreIcon from "@mui/icons-material/Restore";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import ShareIcon from "@mui/icons-material/Share";
 import axios from "axios";
 import SignUp from "../../Assets/Svg/SignUp.png";
 import SignIn from "../../Assets/Svg/SignIn.png";
@@ -65,6 +38,7 @@ const LandingPage = () => {
     emailValidity: true,
     confirmPassValidity: false,
     confirmationCode: "",
+    accessToken: "",
   });
 
   const navigate = useNavigate();
@@ -143,30 +117,8 @@ const LandingPage = () => {
 
   // Sign In Function
   const signIn = () => {
-    console.log("Sign In Clicked!");
-    toast.success("Welcome User", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
-    // Navigate to another page after signing in
-    navigate("/Home");
-  };
-
-  // Sign Up Function
-  const signUp = () => {
-    console.log("Form Data", formData);
-    if (
-      formData.signUpEmail === "" ||
-      formData.signUpPassword === "" ||
-      formData.signUpConfirmPassword === ""
-    ) {
-      toast.error("Please fill all fields", {
+    if (formData.signInEmail === "" || formData.signInPassword === "") {
+      toast.error("Please fill the Required Fields", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -177,9 +129,40 @@ const LandingPage = () => {
         theme: "light",
       });
     } else {
-      // Check the Confirm Password Validity
-      if (formData.signUpPassword !== formData.signUpConfirmPassword) {
-        toast.error("Passwords are not matching", {
+      try {
+        // Access the token
+        const accessToken = "AccessToken_01";
+        // Store the token in localStorage
+        localStorage.setItem("Access_Token", accessToken);
+
+        // Navigate to another page after signing in
+        navigate("/Home");
+      } catch (error) {
+        console.log("Login Error", error.message);
+        toast.error(error.message, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
+      }
+    }
+  };
+
+  // Sign Up Function
+  const signUp = async () => {
+    console.log("Form Data", formData);
+    try {
+      if (
+        formData.signUpEmail === "" ||
+        formData.signUpPassword === "" ||
+        formData.signUpConfirmPassword === ""
+      ) {
+        toast.error("Please fill all fields", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -190,13 +173,9 @@ const LandingPage = () => {
           theme: "light",
         });
       } else {
-        // Check if all conditions are true
-        if (formData.passwordValidity && formData.emailValidity) {
-          // All conditions are true, proceed with sending data to the database
-          // sendDataToDatabase();
-
-          // Show success toast container
-          toast.success(" Data sent to the database successfully", {
+        // Check the Confirm Password Validity
+        if (formData.signUpPassword !== formData.signUpConfirmPassword) {
+          toast.error("Passwords are not matching", {
             position: "top-right",
             autoClose: 3000,
             hideProgressBar: false,
@@ -206,57 +185,148 @@ const LandingPage = () => {
             progress: undefined,
             theme: "light",
           });
-          setFormData((prevData) => ({
-            ...prevData,
-            componentState: "ConfirmationCode",
-          }));
         } else {
-          // Conditions are not met, show error toast container based on the false condition
-          if (!formData.emailValidity) {
-            toast.error("Email address is not valid", {
-              position: "top-right",
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              theme: "light",
-            });
-          }
-          if (!formData.passwordValidity) {
-            toast.error("Password does not meet the required criteria", {
-              position: "top-right",
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              theme: "light",
-            });
+          // Check if all conditions are true
+          if (formData.passwordValidity && formData.emailValidity) {
+            // All conditions are true, proceed with sending data to the database
+            // sendDataToDatabase();
+            try {
+              const response = await axios.post(
+                "https://smga06d5t7.execute-api.us-east-1.amazonaws.com/prod/auth/sign-up",
+                {
+                  UserId: formData.signUpEmail,
+                  Password: formData.signUpPassword,
+                }
+              );
+              console.log("User Registered Successfully", response);
+
+              // Update componentState
+              setFormData((prevData) => ({
+                ...prevData,
+                componentState: "ConfirmationCode",
+              }));
+
+              // Show success toast container
+              toast.success(" Data sent to the database successfully", {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+              });
+            } catch (error) {
+              console.log(
+                "Error Sign Up",
+                error.response ? error.response.data : error.message
+              );
+              toast.error(error.message, {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+              });
+            }
+          } else {
+            // Conditions are not met, show error toast container based on the false condition
+            if (!formData.emailValidity) {
+              toast.error("Email address is not valid", {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+              });
+            }
+            if (!formData.passwordValidity) {
+              toast.error("Password does not meet the required criteria", {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+              });
+            }
           }
         }
       }
+    } catch (error) {
+      console.error("Error during sign up:", error.message);
+
+      // Show error toast container
+      toast.error(error.message, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
+    console.log("Component State", formData.componentState);
   };
 
-  // Send the confirmation Code
-  const submitConfirmationCode = () => {
-    toast.success("Verified", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
-    setFormData((prevData) => ({
-      ...prevData,
-      componentState: "SignIn",
-    }));
+  // Check the confirmation Code
+  const submitConfirmationCode = async () => {
+    console.log("FormData", formData);
+    // get the status of the confirmation code
+    try {
+      const response = await axios.get(
+        "https://smga06d5t7.execute-api.us-east-1.amazonaws.com/prod/auth/verify"
+        // {
+        //   Email: formData.signUpEmail,
+        //   Password: formData.signUpPassword,
+        //   Code: formData.confirmationCode,
+        // }
+        // {
+        //   Email: formData.signUpEmail,
+        //   Password: formData.signUpPassword,
+        //   Code: formData.confirmationCode.toString,
+        // }
+      );
+      console.log(formData.signUpPassword);
+      console.log("Successfully Verified", response);
+      toast.success("Verified", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+      setFormData((prevData) => ({
+        ...prevData,
+        componentState: "SignIn",
+      }));
+    } catch (error) {
+      console.log("Code Verification Error :", error.message);
+      toast.error(error.message, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    }
   };
 
   return (
@@ -497,7 +567,7 @@ const LandingPage = () => {
                   </p>
                 </div>
               </div>
-            ) : formData.componentState === "Confirmation" ? (
+            ) : formData.componentState === "ConfirmationCode" ? (
               <div className="flex flex-col justify-center items-center">
                 {/* Drive Logo */}
                 <div>
@@ -574,7 +644,7 @@ const LandingPage = () => {
                 alt="Sign In SVG"
                 style={{ width: "400px", height: "400px" }}
               />
-            ) : formData.componentState === "Confirmation" ? (
+            ) : formData.componentState === "ConfirmationCode" ? (
               <img
                 src={Confirmation}
                 alt="Sign In SVG"
