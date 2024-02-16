@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Grid,
@@ -134,6 +134,7 @@ const LandingPage = () => {
         const accessToken = "AccessToken_01";
         // Store the token in localStorage
         localStorage.setItem("Access_Token", accessToken);
+        localStorage.setItem("E mail", formData.signInEmail);
 
         // Navigate to another page after signing in
         navigate("/Home");
@@ -328,6 +329,18 @@ const LandingPage = () => {
       });
     }
   };
+
+  // Use effect function
+  useEffect(() => {
+    // Check if access token is available in localStorage
+    const accessToken = localStorage.getItem("Access_Token");
+
+    // If access token is available, navigate to "/Home" page
+    if (accessToken) {
+      console.log("Access Token", accessToken);
+      navigate("/Home");
+    }
+  }, []);
 
   return (
     <div class="h-screen flex justify-center items-center border-r-400">

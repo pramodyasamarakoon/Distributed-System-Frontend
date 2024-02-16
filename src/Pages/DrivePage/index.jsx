@@ -83,6 +83,8 @@ const DrivePage = () => {
     ],
     loader: false,
     uploadedFile: null,
+    fileSubmitLoading: false,
+    userEmail: "",
   });
   const navigate = useNavigate();
 
@@ -122,21 +124,42 @@ const DrivePage = () => {
     setFormData({ ...formData, uploadedFile: file });
   };
 
-  //   Handle submit button
+  //   Handle File submit button
   const handleSubmitButton = () => {
-    console.log("Sent file to the database : ", formData.uploadedFile.name);
-    setShowModal(false);
-    setFormData({ ...formData, uploadedFile: null });
-    toast.success("Successfully Uploaded", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
+    setFormData({ ...formData, fileSubmitLoading: true });
+    try {
+      if (formData.uploadedFile) {
+        console.log("Sent file to the database : ", formData.uploadedFile.name);
+        setShowModal(false);
+        setFormData({ ...formData, uploadedFile: null });
+        toast.success("Successfully Uploaded", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
+        setFormData({ ...formData, fileSubmitLoading: false });
+      } else {
+        toast.error("Please Upload a File before Submit", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
+        setFormData({ ...formData, fileSubmitLoading: false });
+      }
+    } catch (error) {
+      console.log("Error Uploading File", error.message);
+      setFormData({ ...formData, fileSubmitLoading: false });
+    }
   };
 
   const loadData = () => {
@@ -146,6 +169,7 @@ const DrivePage = () => {
   useEffect(() => {
     // Check if access token is available in localStorage
     const accessToken = localStorage.getItem("Access_Token");
+    const email = localStorage.getItem("E mail");
 
     // If access token is not available, navigate to "/" page
     if (!accessToken) {
@@ -153,6 +177,7 @@ const DrivePage = () => {
     } else {
       console.log("Access Token", accessToken);
       setSearchResults(formData.files);
+      setFormData({ ...formData, userEmail: email });
     }
   }, []);
 
@@ -184,6 +209,7 @@ const DrivePage = () => {
       setSearchResults(filteredFiles);
     }
   };
+
   return (
     <div
       className="relative min-h-screen h-auto"
@@ -408,6 +434,12 @@ const DrivePage = () => {
                     >
                       Cancel
                     </Button>
+
+                    {/* {formData.fileSubmitLoading ? (
+                      <LoadingButton loading variant="outlined">
+                        Submit
+                      </LoadingButton>
+                    ) : ( */}
                     <Button
                       size="small"
                       variant="contained"
@@ -420,6 +452,7 @@ const DrivePage = () => {
                     >
                       Submit
                     </Button>
+                    {/* )} */}
                   </div>
                 </div>
               </div>
@@ -457,7 +490,7 @@ const DrivePage = () => {
                 >
                   {/* Topic */}
                   <p className="text-[14px] font-Poppins-Regular flex justify-center overflow-hidden">
-                    pramodyamsamarakoon@gmail.com
+                    {formData.userEmail}
                   </p>
 
                   {/* Log Out Button */}
