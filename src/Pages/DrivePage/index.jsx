@@ -11,75 +11,77 @@ import Loader from "../../Components/Loader";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import NotFound from "../../Assets/Svg/NotFound.svg";
 
 const DrivePage = () => {
   const [formData, setFormData] = useState({
     currentStatus: "MyDrive",
     files: [
-      {
-        id: 1,
-        name: "Distributed Systems",
-        date: "5th January",
-        size: "7 MB",
-        starred: false,
-        trash: false,
-      },
-      {
-        id: 2,
-        name: "Information Technology",
-        date: "12th February",
-        size: "12 MB",
-        starred: true,
-        trash: false,
-      },
-      {
-        id: 3,
-        name: "Management Studies",
-        date: "28th March",
-        size: "11 MB",
-        starred: false,
-        trash: true,
-      },
-      {
-        id: 4,
-        name: "MOT",
-        date: "3rd December",
-        size: "3 MB",
-        starred: true,
-        trash: true,
-      },
-      {
-        id: 5,
-        name: "Distributed Systems",
-        date: "5th January",
-        size: "7 MB",
-        starred: false,
-        trash: false,
-      },
-      {
-        id: 6,
-        name: "Information Technology",
-        date: "12th February",
-        size: "12 MB",
-        starred: true,
-        trash: false,
-      },
-      {
-        id: 7,
-        name: "Management Studies",
-        date: "28th March",
-        size: "11 MB",
-        starred: false,
-        trash: true,
-      },
-      {
-        id: 8,
-        name: "MOT",
-        date: "3rd December",
-        size: "3 MB",
-        starred: true,
-        trash: true,
-      },
+      // {
+      //   id: 1,
+      //   name: "Distributed Systems",
+      //   date: "5th January",
+      //   size: "7 MB",
+      //   starred: false,
+      //   trash: false,
+      // },
+      // {
+      //   id: 2,
+      //   name: "Information Technology",
+      //   date: "12th February",
+      //   size: "12 MB",
+      //   starred: true,
+      //   trash: false,
+      // },
+      // {
+      //   id: 3,
+      //   name: "Management Studies",
+      //   date: "28th March",
+      //   size: "11 MB",
+      //   starred: false,
+      //   trash: true,
+      // },
+      // {
+      //   id: 4,
+      //   name: "MOT",
+      //   date: "3rd December",
+      //   size: "3 MB",
+      //   starred: true,
+      //   trash: true,
+      // },
+      // {
+      //   id: 5,
+      //   name: "Distributed Systems",
+      //   date: "5th January",
+      //   size: "7 MB",
+      //   starred: false,
+      //   trash: false,
+      // },
+      // {
+      //   id: 6,
+      //   name: "Information Technology",
+      //   date: "12th February",
+      //   size: "12 MB",
+      //   starred: true,
+      //   trash: false,
+      // },
+      // {
+      //   id: 7,
+      //   name: "Management Studies",
+      //   date: "28th March",
+      //   size: "11 MB",
+      //   starred: false,
+      //   trash: true,
+      // },
+      // {
+      //   id: 8,
+      //   name: "MOT",
+      //   date: "3rd December",
+      //   size: "3 MB",
+      //   starred: true,
+      //   trash: true,
+      // },
     ],
     loader: false,
     uploadedFile: null,
@@ -129,20 +131,30 @@ const DrivePage = () => {
     setFormData({ ...formData, fileSubmitLoading: true });
     try {
       if (formData.uploadedFile) {
-        console.log("Sent file to the database : ", formData.uploadedFile.name);
-        setShowModal(false);
-        setFormData({ ...formData, uploadedFile: null });
-        toast.success("Successfully Uploaded", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        });
-        setFormData({ ...formData, fileSubmitLoading: false });
+        try {
+          const response = axios.post(
+            "https://ip6y9gmfsa.execute-api.us-east-1.amazonaws.com/prod",
+            formData.uploadedFile
+          );
+          console.log("Sent file to the database : ", response);
+          setShowModal(false);
+          setFormData({ ...formData, uploadedFile: null });
+          toast.success("Successfully Uploaded", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+          });
+          setFormData({ ...formData, fileSubmitLoading: false });
+          loadAllFiles();
+        } catch (error) {
+          console.log(" File Uploading Error: ", error);
+          setFormData({ ...formData, fileSubmitLoading: false });
+        }
       } else {
         toast.error("Please Upload a File before Submit", {
           position: "top-right",
@@ -162,22 +174,38 @@ const DrivePage = () => {
     }
   };
 
-  const loadData = () => {
-    // load api with starred and trash booleans
+  const loadAllFiles = async () => {
+    setFormData({ ...formData, loader: true });
+    try {
+      const response = await axios.get(
+        "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/getAll"
+      );
+      console.log("File Data:", response.data);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        console.log("File not found.");
+        setFormData({ ...formData, files: [] });
+        // setSearchResults([]);
+      } else {
+        console.log("Get All Files Error:", error.message);
+      }
+    }
+    setFormData({ ...formData, loader: false });
   };
 
   useEffect(() => {
     // Check if access token is available in localStorage
     const accessToken = localStorage.getItem("Access_Token");
     const email = localStorage.getItem("E mail");
+    setFormData({ ...formData, userEmail: email });
 
     // If access token is not available, navigate to "/" page
     if (!accessToken) {
       navigate("/");
     } else {
       console.log("Access Token", accessToken);
-      setSearchResults(formData.files);
-      setFormData({ ...formData, userEmail: email });
+      console.log("E mail", email);
+      loadAllFiles();
     }
   }, []);
 
@@ -533,6 +561,17 @@ const DrivePage = () => {
           <div className="mt-6 max-h-[445px] overflow-y-auto">
             {formData.loader ? (
               <Loader />
+            ) : searchResults === null || searchResults.length === 0 ? (
+              <>
+                <div className="h-full flex flex-col items-center justify-center">
+                  <p>No Files Found</p>
+                  <img
+                    src={NotFound}
+                    alt="No FIles SVG"
+                    style={{ width: "300px", height: "300px" }}
+                  />
+                </div>
+              </>
             ) : (
               <>
                 {searchResults &&

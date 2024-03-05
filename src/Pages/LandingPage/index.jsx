@@ -40,6 +40,7 @@ const LandingPage = () => {
     confirmationCode: "",
     accessToken: "",
   });
+  const [submitButtonLoader, setSubmitButtonLoader] = useState(false);
 
   const navigate = useNavigate();
 
@@ -156,6 +157,7 @@ const LandingPage = () => {
 
   // Sign Up Function
   const signUp = async () => {
+    setSubmitButtonLoader(true);
     console.log("Form Data", formData);
     try {
       if (
@@ -220,19 +222,20 @@ const LandingPage = () => {
               });
             } catch (error) {
               console.log(
-                "Error Sign Up",
+                "Error Sign Up:",
                 error.response ? error.response.data : error.message
               );
-              toast.error(error.message, {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "light",
-              });
+              error.response &&
+                toast.error(error.response.data, {
+                  position: "top-right",
+                  autoClose: 3000,
+                  hideProgressBar: false,
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  progress: undefined,
+                  theme: "light",
+                });
             }
           } else {
             // Conditions are not met, show error toast container based on the false condition
@@ -264,7 +267,7 @@ const LandingPage = () => {
         }
       }
     } catch (error) {
-      console.error("Error during sign up:", error.message);
+      console.error("Error:", error.message);
 
       // Show error toast container
       toast.error(error.message, {
@@ -278,6 +281,7 @@ const LandingPage = () => {
         theme: "light",
       });
     }
+    setSubmitButtonLoader(false);
     console.log("Component State", formData.componentState);
   };
 
@@ -286,18 +290,13 @@ const LandingPage = () => {
     console.log("FormData", formData);
     // get the status of the confirmation code
     try {
-      const response = await axios.get(
-        "https://smga06d5t7.execute-api.us-east-1.amazonaws.com/prod/auth/verify"
-        // {
-        //   Email: formData.signUpEmail,
-        //   Password: formData.signUpPassword,
-        //   Code: formData.confirmationCode,
-        // }
-        // {
-        //   Email: formData.signUpEmail,
-        //   Password: formData.signUpPassword,
-        //   Code: formData.confirmationCode.toString,
-        // }
+      const response = await axios.post(
+        "https://smga06d5t7.execute-api.us-east-1.amazonaws.com/prod/auth/verify",
+        {
+          Email: formData.signUpEmail,
+          Password: formData.signUpPassword,
+          Code: formData.confirmationCode,
+        }
       );
       console.log(formData.signUpPassword);
       console.log("Successfully Verified", response);
@@ -440,9 +439,12 @@ const LandingPage = () => {
                     variant="contained"
                     style={{
                       width: "100%",
-                      backgroundColor: "#1E1F6F",
-                      color: "#FFFFFF",
+                      backgroundColor: submitButtonLoader
+                        ? "#BFBFBF"
+                        : "#1E1F6F",
+                      color: submitButtonLoader ? "#252526" : "#FFFFFF",
                     }}
+                    disabled={submitButtonLoader}
                     onClick={signIn}
                   >
                     Sign In
@@ -560,9 +562,12 @@ const LandingPage = () => {
                     variant="contained"
                     style={{
                       width: "100%",
-                      backgroundColor: "#1E1F6F",
-                      color: "#FFFFFF",
+                      backgroundColor: submitButtonLoader
+                        ? "#BFBFBF"
+                        : "#1E1F6F",
+                      color: submitButtonLoader ? "#252526" : "#FFFFFF",
                     }}
+                    disabled={submitButtonLoader}
                     onClick={signUp}
                   >
                     Sign Up
@@ -620,9 +625,12 @@ const LandingPage = () => {
                     variant="contained"
                     style={{
                       width: "100%",
-                      backgroundColor: "#1E1F6F",
-                      color: "#FFFFFF",
+                      backgroundColor: submitButtonLoader
+                        ? "#BFBFBF"
+                        : "#1E1F6F",
+                      color: submitButtonLoader ? "#252526" : "#FFFFFF",
                     }}
+                    disabled={submitButtonLoader}
                     onClick={submitConfirmationCode}
                   >
                     Submit
