@@ -1,9 +1,10 @@
 import React from "react";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import StarOutlineOutlinedIcon from "@mui/icons-material/StarOutlineOutlined";
-import { IconButton, Tooltip } from "@mui/material";
 import StarOutlinedIcon from "@mui/icons-material/StarOutlined";
 import RestoreOutlinedIcon from "@mui/icons-material/RestoreOutlined";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import { IconButton, Tooltip } from "@mui/material";
 
 const FileBar = ({ id, name, date, size, starred, trash }) => {
   // Starred Files Function
@@ -28,6 +29,11 @@ const FileBar = ({ id, name, date, size, starred, trash }) => {
   const restoreFiles = (id) => {
     console.log("Restore", id);
     // logics
+  };
+
+  // Dowload the File
+  const downloadFile = (id) => {
+    console.log("Download", id);
   };
   return (
     <div
@@ -99,6 +105,18 @@ const FileBar = ({ id, name, date, size, starred, trash }) => {
             <DeleteOutlineOutlinedIcon sx={{ fontSize: "20px" }} />
           </Tooltip>
         )}
+      </IconButton>
+
+      {/* Download Button */}
+      <IconButton
+        sx={{
+          p: "6px",
+          marginRight: "5px",
+        }}
+      >
+        <Tooltip title="Download" onClick={() => downloadFile(id)}>
+          <FileDownloadOutlinedIcon sx={{ fontSize: "20px" }} />
+        </Tooltip>
       </IconButton>
     </div>
   );

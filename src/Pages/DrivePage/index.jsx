@@ -3,7 +3,7 @@ import Logo from "../../Components/Logo";
 import StarOutlinedIcon from "@mui/icons-material/StarOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import { Button, IconButton, InputBase, Paper } from "@mui/material";
+import { Button, IconButton, InputBase, Paper, Tooltip } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import FileBar from "../../Components/FileBar";
@@ -13,81 +13,21 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import NotFound from "../../Assets/Svg/NotFound.svg";
+import StarOutlineOutlinedIcon from "@mui/icons-material/StarOutlineOutlined";
+import RestoreOutlinedIcon from "@mui/icons-material/RestoreOutlined";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 
 const DrivePage = () => {
   const [formData, setFormData] = useState({
-    currentStatus: "MyDrive",
-    files: [
-      // {
-      //   id: 1,
-      //   name: "Distributed Systems",
-      //   date: "5th January",
-      //   size: "7 MB",
-      //   starred: false,
-      //   trash: false,
-      // },
-      // {
-      //   id: 2,
-      //   name: "Information Technology",
-      //   date: "12th February",
-      //   size: "12 MB",
-      //   starred: true,
-      //   trash: false,
-      // },
-      // {
-      //   id: 3,
-      //   name: "Management Studies",
-      //   date: "28th March",
-      //   size: "11 MB",
-      //   starred: false,
-      //   trash: true,
-      // },
-      // {
-      //   id: 4,
-      //   name: "MOT",
-      //   date: "3rd December",
-      //   size: "3 MB",
-      //   starred: true,
-      //   trash: true,
-      // },
-      // {
-      //   id: 5,
-      //   name: "Distributed Systems",
-      //   date: "5th January",
-      //   size: "7 MB",
-      //   starred: false,
-      //   trash: false,
-      // },
-      // {
-      //   id: 6,
-      //   name: "Information Technology",
-      //   date: "12th February",
-      //   size: "12 MB",
-      //   starred: true,
-      //   trash: false,
-      // },
-      // {
-      //   id: 7,
-      //   name: "Management Studies",
-      //   date: "28th March",
-      //   size: "11 MB",
-      //   starred: false,
-      //   trash: true,
-      // },
-      // {
-      //   id: 8,
-      //   name: "MOT",
-      //   date: "3rd December",
-      //   size: "3 MB",
-      //   starred: true,
-      //   trash: true,
-      // },
-    ],
     loader: false,
     uploadedFile: null,
     fileSubmitLoading: false,
     userEmail: "",
   });
+  const [files, setFiles] = useState([]);
+  const [submitButtonLoader, setSubmitButtonLoader] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [currentState, setCurrentState] = useState("MyDrive");
   const navigate = useNavigate();
 
   //   Handle the add files dialog box
@@ -126,15 +66,23 @@ const DrivePage = () => {
     setFormData({ ...formData, uploadedFile: file });
   };
 
-  //   Handle File submit button
-  const handleSubmitButton = () => {
-    setFormData({ ...formData, fileSubmitLoading: true });
+  // Handle File submit button
+  const handleSubmitButton = async () => {
+    setSubmitButtonLoader(true);
     try {
       if (formData.uploadedFile) {
+        const formData = new FormData();
+        formData.append("file", formData.uploadedFile);
+
         try {
-          const response = axios.post(
-            "https://ip6y9gmfsa.execute-api.us-east-1.amazonaws.com/prod",
-            formData.uploadedFile
+          const response = await axios.post(
+            `https://kfa6a8ib1k.execute-api.us-east-1.amazonaws.com/v1/upload2?file_name=tempFile01`,
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
           );
           console.log("Sent file to the database : ", response);
           setShowModal(false);
@@ -149,11 +97,9 @@ const DrivePage = () => {
             progress: undefined,
             theme: "light",
           });
-          setFormData({ ...formData, fileSubmitLoading: false });
           loadAllFiles();
         } catch (error) {
-          console.log(" File Uploading Error: ", error);
-          setFormData({ ...formData, fileSubmitLoading: false });
+          console.log("File Uploading Error: ", error.message);
         }
       } else {
         toast.error("Please Upload a File before Submit", {
@@ -166,48 +112,63 @@ const DrivePage = () => {
           progress: undefined,
           theme: "light",
         });
-        setFormData({ ...formData, fileSubmitLoading: false });
       }
     } catch (error) {
       console.log("Error Uploading File", error.message);
-      setFormData({ ...formData, fileSubmitLoading: false });
+    } finally {
+      setSubmitButtonLoader(false);
     }
   };
 
   const loadAllFiles = async () => {
+    console.log("Current State:", currentState);
     setFormData({ ...formData, loader: true });
+    const state = currentState;
+
     try {
-      const response = await axios.get(
-        "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/getAll"
-      );
+      let response;
+      if (state === "Trash") {
+        response = await axios.get(
+          // Get All Trashed
+          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/getAllTrash"
+        );
+      } else if (state === "Starred") {
+        // Get All Starred
+        response = await axios.get(
+          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/getStaredFiles"
+        );
+      } else {
+        response = await axios.get(
+          // Get All
+          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/getAll"
+        );
+      }
+
       console.log("File Data:", response.data);
+
+      // Convert epoch timestamps to local date time
+      const filesWithLocalDateTime = response.data.map((file) => ({
+        ...file,
+        CreatedDate: new Date(file.CreatedDate * 1000).toLocaleString(), // Convert epoch to milliseconds
+      }));
+
+      // Assuming formData is an object containing files
+      setFiles(filesWithLocalDateTime);
+      // setSearchResults(filesWithLocalDateTime);
     } catch (error) {
       if (error.response && error.response.status === 404) {
         console.log("File not found.");
-        setFormData({ ...formData, files: [] });
-        // setSearchResults([]);
+        // If files array should be empty when not found
+        setFiles([]);
+        // If you also want to clear search results
+        setSearchResults([]);
       } else {
         console.log("Get All Files Error:", error.message);
       }
     }
+    // setSearchResults(files);
     setFormData({ ...formData, loader: false });
   };
-
-  useEffect(() => {
-    // Check if access token is available in localStorage
-    const accessToken = localStorage.getItem("Access_Token");
-    const email = localStorage.getItem("E mail");
-    setFormData({ ...formData, userEmail: email });
-
-    // If access token is not available, navigate to "/" page
-    if (!accessToken) {
-      navigate("/");
-    } else {
-      console.log("Access Token", accessToken);
-      console.log("E mail", email);
-      loadAllFiles();
-    }
-  }, []);
 
   // Log Out function
   const logOut = () => {
@@ -224,17 +185,114 @@ const DrivePage = () => {
     // Call your search function here
     searchFiles(e.target.value);
   };
-
   const searchFiles = (searchTerm) => {
     if (searchTerm.trim() === "") {
       // If search term is empty, show all files
-      setSearchResults(formData.files);
+      setSearchResults(files);
     } else {
       // Otherwise, filter files based on search term
-      const filteredFiles = formData.files.filter((file) => {
-        return file.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const filteredFiles = files.filter((file) => {
+        return file.FileName.toLowerCase().includes(searchTerm.toLowerCase());
       });
       setSearchResults(filteredFiles);
+    }
+  };
+
+  useEffect(() => {
+    // Check if access token is available in localStorage
+    const accessToken = localStorage.getItem("Access_Token");
+    const email = localStorage.getItem("E mail");
+
+    // If access token is not available, navigate to "/" page
+    if (!accessToken) {
+      navigate("/");
+    } else {
+      console.log("Access Token", accessToken);
+      loadAllFiles();
+    }
+  }, [currentState]);
+
+  // Star or Unstar Files
+  const StarById = async (id) => {
+    try {
+      // Find the file by id
+      const file = files.find((file) => file.FileName === id);
+      if (!file) {
+        toast.error(`${file.NameOfTheFile} not found.`, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
+        return;
+      }
+
+      // Check the status of the Stared variable
+      if (file.Stared) {
+        // Call an endpoint for files that are already starred
+        const response = await axios.put(
+          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file//un-stared",
+          { Id: id }
+        );
+        console.log("UnStarred File:", response.data);
+      } else {
+        // Call an endpoint for files that are not starred
+        const response = await axios.put(
+          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/mark-stared",
+          { Id: id }
+        );
+        console.log("Starred File:", response.data);
+      }
+      loadAllFiles();
+    } catch (error) {
+      console.error("Error starring file:", error.message);
+      // Handle the error here
+    }
+  };
+
+  // Delete or Restore Files
+  const DeleteById = async (id) => {
+    try {
+      // Find the file by id
+      const file = files.find((file) => file.FileName === id);
+      if (!file) {
+        toast.error(`${file.NameOfTheFile} not found.`, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
+        return;
+      }
+
+      // Check the status of the Stared variable
+      if (file.Trash) {
+        // Call an endpoint for files that are already Deleted
+        const response = await axios.put(
+          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/un-trash",
+          { Id: id }
+        );
+        console.log("Restored File:", response.data);
+      } else {
+        // Call an endpoint for files that are not Deleted
+        const response = await axios.put(
+          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/addToTrash",
+          { Id: id }
+        );
+        console.log("Deleted File:", response.data);
+      }
+      loadAllFiles();
+    } catch (error) {
+      console.error("Error Deleting file:", error.message);
+      // Handle the error here
     }
   };
 
@@ -258,9 +316,9 @@ const DrivePage = () => {
           {/* My Drive */}
           <div
             className="mt-6 cursor-pointer"
-            onClick={() =>
-              setFormData({ ...formData, currentStatus: "MyDrive" })
-            }
+            onClick={() => {
+              setCurrentState("MyDrive");
+            }}
           >
             <p className="text-[14px] text-[#E6F2FF] flex font-Poppins-Regular">
               <CloudUploadOutlinedIcon
@@ -276,9 +334,9 @@ const DrivePage = () => {
           {/* Starred */}
           <div
             className="mt-6 cursor-pointer"
-            onClick={() =>
-              setFormData({ ...formData, currentStatus: "Starred" })
-            }
+            onClick={() => {
+              setCurrentState("Starred");
+            }}
           >
             <p className="text-[14px] text-[#E6F2FF] flex font-Poppins-Regular">
               <StarOutlinedIcon
@@ -294,7 +352,9 @@ const DrivePage = () => {
           {/* Trash */}
           <div
             className="mt-6 cursor-pointer"
-            onClick={() => setFormData({ ...formData, currentStatus: "Trash" })}
+            onClick={() => {
+              setCurrentState("Trash");
+            }}
           >
             <p className="text-[14px] text-[#E6F2FF] flex font-Poppins-Regular">
               <DeleteOutlineOutlinedIcon
@@ -459,6 +519,7 @@ const DrivePage = () => {
                       variant="outlined"
                       size="small"
                       onClick={handleCancelClick}
+                      style={{ marginRight: "5px" }}
                     >
                       Cancel
                     </Button>
@@ -472,9 +533,10 @@ const DrivePage = () => {
                       size="small"
                       variant="contained"
                       style={{
-                        backgroundColor: "#1E1F6F",
-                        color: "#FFFFFF",
-                        marginLeft: "10px",
+                        backgroundColor: submitButtonLoader
+                          ? "#BFBFBF"
+                          : "#1E1F6F",
+                        color: submitButtonLoader ? "#252526" : "#FFFFFF",
                       }}
                       onClick={handleSubmitButton}
                     >
@@ -518,7 +580,8 @@ const DrivePage = () => {
                 >
                   {/* Topic */}
                   <p className="text-[14px] font-Poppins-Regular flex justify-center overflow-hidden">
-                    {formData.userEmail}
+                    {localStorage.getItem("E mail")}
+                    {/* {formData.userEmail} */}
                   </p>
 
                   {/* Log Out Button */}
@@ -547,11 +610,11 @@ const DrivePage = () => {
           {/* Topic */}
           <div className="mt-9">
             <p className="text-[16px] font-Poppins-Regular">
-              {formData.currentStatus === "MyDrive"
+              {currentState === "MyDrive"
                 ? "Files"
-                : formData.currentStatus === "Starred"
+                : currentState === "Starred"
                 ? "Starred Files"
-                : formData.currentStatus === "Trash"
+                : currentState === "Trash"
                 ? "Trash Files"
                 : "Files"}
             </p>
@@ -561,7 +624,7 @@ const DrivePage = () => {
           <div className="mt-6 max-h-[445px] overflow-y-auto">
             {formData.loader ? (
               <Loader />
-            ) : searchResults === null || searchResults.length === 0 ? (
+            ) : files === null || files.length === 0 ? (
               <>
                 <div className="h-full flex flex-col items-center justify-center">
                   <p>No Files Found</p>
@@ -574,17 +637,117 @@ const DrivePage = () => {
               </>
             ) : (
               <>
-                {searchResults &&
-                  searchResults.map((file) => (
-                    <FileBar
-                      key={file.id}
-                      id={file.id}
-                      name={file.name}
-                      date={file.date}
-                      size={file.size}
-                      starred={file.starred}
-                      trash={file.trash}
-                    />
+                {files &&
+                  files.map((file) => (
+                    <div
+                      key={file.FileName}
+                      id={file.FileName}
+                      style={{
+                        padding: "10px",
+                        backgroundColor: "white",
+                        color: "black",
+                        borderRadius: "1rem",
+                        display: "flex",
+                        alignItems: "center",
+                        marginTop: "10px",
+                        marginRight: "5px",
+                      }}
+                    >
+                      {/* File Name */}
+                      <div
+                        style={{
+                          flex: 1.5,
+                          marginRight: "5px",
+                          marginLeft: "15px",
+                        }}
+                      >
+                        <p className="text-[14px] font-Poppins-Regular">
+                          {file.NameOfTheFile}
+                        </p>
+                      </div>
+
+                      {/* Date */}
+                      <div style={{ flex: 1, marginRight: "5px" }}>
+                        <p className="text-[14px] font-Poppins-Regular">
+                          {file.CreatedDate}{" "}
+                        </p>
+                      </div>
+
+                      {/* Star Button */}
+                      {file.Trash ? null : (
+                        <IconButton
+                          sx={{
+                            p: "6px",
+                            marginRight: "5px",
+                          }}
+                        >
+                          {" "}
+                          {file.Stared ? (
+                            <Tooltip
+                              title="Remove Starred"
+                              onClick={() => StarById(file.FileName)}
+                            >
+                              <StarOutlinedIcon sx={{ fontSize: "20px" }} />
+                            </Tooltip>
+                          ) : (
+                            <Tooltip
+                              title=" Add to Starred"
+                              onClick={() => StarById(file.FileName)}
+                            >
+                              <StarOutlineOutlinedIcon
+                                sx={{ fontSize: "20px" }}
+                              />
+                            </Tooltip>
+                          )}
+                        </IconButton>
+                      )}
+
+                      {/* Trash Button */}
+                      <IconButton
+                        sx={{
+                          p: "6px",
+                          marginRight: "5px",
+                        }}
+                      >
+                        {" "}
+                        {file.Trash ? (
+                          <Tooltip
+                            title="Restore"
+                            onClick={() => DeleteById(file.FileName)}
+                          >
+                            <RestoreOutlinedIcon sx={{ fontSize: "20px" }} />
+                          </Tooltip>
+                        ) : (
+                          <Tooltip
+                            title="Delete"
+                            onClick={() => DeleteById(file.FileName)}
+                          >
+                            <DeleteOutlineOutlinedIcon
+                              sx={{ fontSize: "20px" }}
+                            />
+                          </Tooltip>
+                        )}
+                      </IconButton>
+
+                      {/* Download Button */}
+                      {file.Trash ? null : (
+                        <IconButton
+                          sx={{
+                            p: "6px",
+                            marginRight: "5px",
+                          }}
+                        >
+                          <Tooltip
+                            title="Download"
+                            // onClick={() => downloadFile(id)}
+                          >
+                            <FileDownloadOutlinedIcon
+                              sx={{ fontSize: "20px" }}
+                            />
+                          </Tooltip>
+                        </IconButton>
+                      )}
+                    </div>
                   ))}
               </>
             )}

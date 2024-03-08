@@ -117,7 +117,8 @@ const LandingPage = () => {
   };
 
   // Sign In Function
-  const signIn = () => {
+  const signIn = async () => {
+    // Validate the inputs
     if (formData.signInEmail === "" || formData.signInPassword === "") {
       toast.error("Please fill the Required Fields", {
         position: "top-right",
@@ -129,18 +130,54 @@ const LandingPage = () => {
         progress: undefined,
         theme: "light",
       });
-    } else {
-      try {
-        // Access the token
-        const accessToken = "AccessToken_01";
-        // Store the token in localStorage
-        localStorage.setItem("Access_Token", accessToken);
-        localStorage.setItem("E mail", formData.signInEmail);
+      return; // Exit early if inputs are empty
+    }
 
-        // Navigate to another page after signing in
-        navigate("/Home");
-      } catch (error) {
-        console.log("Login Error", error.message);
+    try {
+      setSubmitButtonLoader(true);
+      const response = await axios.post(
+        "https://smga06d5t7.execute-api.us-east-1.amazonaws.com/prod/auth/sign-in",
+        {
+          Email: formData.signInEmail,
+          Password: formData.signInPassword,
+        }
+      );
+
+      console.log("Login Response ", response.data);
+
+      // Access the token
+      const accessToken = response.data
+        .split("Access Token: ")[1]
+        ?.split(",")[0];
+
+      if (!accessToken) {
+        throw new Error("Access token not found in response");
+      }
+
+      // Store the token in localStorage
+      localStorage.setItem("Access_Token", accessToken);
+      localStorage.setItem("E mail", formData.signInEmail);
+
+      setSubmitButtonLoader(false);
+      // Navigate to another page after signing in
+      navigate("/Home");
+    } catch (error) {
+      console.log("Login Error", error.message);
+
+      if (error.response && error.response.status === 500) {
+        // Handle authentication errors
+        toast.error("Incorrect username or password.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
+      } else {
+        // Handle other unexpected errors
         toast.error(error.message, {
           position: "top-right",
           autoClose: 3000,
@@ -152,6 +189,8 @@ const LandingPage = () => {
           theme: "light",
         });
       }
+
+      setSubmitButtonLoader(false);
     }
   };
 
