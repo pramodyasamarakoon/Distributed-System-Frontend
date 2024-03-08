@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import Logo from "../../Components/Logo";
-import StarOutlinedIcon from "@mui/icons-material/StarOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { Button, IconButton, InputBase, Paper, Tooltip } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
@@ -16,6 +17,7 @@ import NotFound from "../../Assets/Svg/NotFound.svg";
 import StarOutlineOutlinedIcon from "@mui/icons-material/StarOutlineOutlined";
 import RestoreOutlinedIcon from "@mui/icons-material/RestoreOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import StarIcon from "@mui/icons-material/Star";
 
 const DrivePage = () => {
   const [formData, setFormData] = useState({
@@ -235,13 +237,13 @@ const DrivePage = () => {
       if (file.Stared) {
         // Call an endpoint for files that are already starred
         const response = await axios.put(
-          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file//un-stared",
+          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/un-stared",
           { Id: id }
         );
         console.log("UnStarred File:", response.data);
       } else {
         // Call an endpoint for files that are not starred
-        const response = await axios.put(
+        const response = await axios.post(
           "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/mark-stared",
           { Id: id }
         );
@@ -283,7 +285,7 @@ const DrivePage = () => {
         console.log("Restored File:", response.data);
       } else {
         // Call an endpoint for files that are not Deleted
-        const response = await axios.put(
+        const response = await axios.post(
           "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/addToTrash",
           { Id: id }
         );
@@ -294,6 +296,18 @@ const DrivePage = () => {
       console.error("Error Deleting file:", error.message);
       // Handle the error here
     }
+  };
+
+  // Download File
+  const downloadFile = (url) => {
+    // Create a temporary anchor element
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank"; // Open in a new tab
+    link.rel = "noopener noreferrer"; // Security best practice
+
+    // Trigger a click event to start downloading the file
+    link.click();
   };
 
   return (
@@ -321,13 +335,23 @@ const DrivePage = () => {
             }}
           >
             <p className="text-[14px] text-[#E6F2FF] flex font-Poppins-Regular">
-              <CloudUploadOutlinedIcon
-                style={{
-                  verticalAlign: "middle",
-                  marginRight: "20px",
-                  fontSize: "20px",
-                }}
-              />
+              {currentState === "MyDrive" ? (
+                <CloudUploadIcon
+                  style={{
+                    verticalAlign: "middle",
+                    marginRight: "20px",
+                    fontSize: "20px",
+                  }}
+                />
+              ) : (
+                <CloudUploadOutlinedIcon
+                  style={{
+                    verticalAlign: "middle",
+                    marginRight: "20px",
+                    fontSize: "20px",
+                  }}
+                />
+              )}
               My Drive
             </p>
           </div>
@@ -339,13 +363,23 @@ const DrivePage = () => {
             }}
           >
             <p className="text-[14px] text-[#E6F2FF] flex font-Poppins-Regular">
-              <StarOutlinedIcon
-                style={{
-                  verticalAlign: "middle",
-                  marginRight: "20px",
-                  fontSize: "20px",
-                }}
-              />
+              {currentState === "Starred" ? (
+                <StarIcon
+                  style={{
+                    verticalAlign: "middle",
+                    marginRight: "20px",
+                    fontSize: "20px",
+                  }}
+                />
+              ) : (
+                <StarOutlineOutlinedIcon
+                  style={{
+                    verticalAlign: "middle",
+                    marginRight: "20px",
+                    fontSize: "20px",
+                  }}
+                />
+              )}
               Starred
             </p>
           </div>
@@ -357,13 +391,23 @@ const DrivePage = () => {
             }}
           >
             <p className="text-[14px] text-[#E6F2FF] flex font-Poppins-Regular">
-              <DeleteOutlineOutlinedIcon
-                style={{
-                  verticalAlign: "middle",
-                  marginRight: "20px",
-                  fontSize: "20px",
-                }}
-              />
+              {currentState === "Trash" ? (
+                <DeleteIcon
+                  style={{
+                    verticalAlign: "middle",
+                    marginRight: "20px",
+                    fontSize: "20px",
+                  }}
+                />
+              ) : (
+                <DeleteOutlineOutlinedIcon
+                  style={{
+                    verticalAlign: "middle",
+                    marginRight: "20px",
+                    fontSize: "20px",
+                  }}
+                />
+              )}
               Trash
             </p>
           </div>
@@ -687,7 +731,7 @@ const DrivePage = () => {
                               title="Remove Starred"
                               onClick={() => StarById(file.FileName)}
                             >
-                              <StarOutlinedIcon sx={{ fontSize: "20px" }} />
+                              <StarIcon sx={{ fontSize: "20px" }} />
                             </Tooltip>
                           ) : (
                             <Tooltip
@@ -739,7 +783,7 @@ const DrivePage = () => {
                         >
                           <Tooltip
                             title="Download"
-                            // onClick={() => downloadFile(id)}
+                            onClick={() => downloadFile(file.ObjectURL)}
                           >
                             <FileDownloadOutlinedIcon
                               sx={{ fontSize: "20px" }}
