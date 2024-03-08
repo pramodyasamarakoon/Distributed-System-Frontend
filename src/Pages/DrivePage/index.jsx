@@ -73,20 +73,35 @@ const DrivePage = () => {
     setSubmitButtonLoader(true);
     try {
       if (formData.uploadedFile) {
-        const formData = new FormData();
-        formData.append("file", formData.uploadedFile);
+        const newFormData = new FormData();
+        newFormData.append("file", formData.uploadedFile);
 
         try {
+          // Python Upload
           const response = await axios.post(
-            `https://kfa6a8ib1k.execute-api.us-east-1.amazonaws.com/v1/upload2?file_name=tempFile01`,
-            formData,
+            `https://kfa6a8ib1k.execute-api.us-east-1.amazonaws.com/v1/upload2?file_name=${formData.uploadedFile.name}`,
+            newFormData,
             {
               headers: {
                 "Content-Type": "multipart/form-data",
               },
             }
           );
-          console.log("Sent file to the database : ", response);
+          console.log(
+            "Upload the file and Start to send it to the database : ",
+            response
+          );
+
+          // Send file to the database
+          const databaseResponse = await axios.post(
+            "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/save",
+            {
+              FileName: "",
+              FileExtension: "",
+              UserId: localStorage.getItem("E mail"),
+              ObjectURL: "",
+            }
+          );
           setShowModal(false);
           setFormData({ ...formData, uploadedFile: null });
           toast.success("Successfully Uploaded", {
@@ -176,6 +191,7 @@ const DrivePage = () => {
   const logOut = () => {
     // Remove the token from localStorage
     localStorage.removeItem("Access_Token");
+    localStorage.removeItem("E mail");
     navigate("/");
   };
 
