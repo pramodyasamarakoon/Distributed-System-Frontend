@@ -65,7 +65,31 @@ const DrivePage = () => {
   //   Handle change the upload file
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-    setFormData({ ...formData, uploadedFile: file });
+    if (file && file.type === "application/pdf") {
+      const fileName = file.name.replace(/\s+/g, "_"); // Replace spaces with underscores
+      setUploadedFileName(fileName);
+      console.log("File Name", fileName);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const binaryData = reader.result.split(",")[1]; // binary data of the file
+        console.log("Binary data of the uploaded file:", binaryData);
+        setFormData({ ...formData, uploadedFile: binaryData });
+      };
+      reader.readAsBinaryString(file);
+      setFormData({ ...formData, uploadedFile: file });
+    } else {
+      // Show error message
+      toast.error("Please select a PDF file.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    }
   };
 
   // Handle File submit button
@@ -75,15 +99,21 @@ const DrivePage = () => {
       if (formData.uploadedFile) {
         const newFormData = new FormData();
         newFormData.append("file", formData.uploadedFile);
+        console.log(
+          "Binary data of the uploaded file:",
+          newFormData.get("file")
+        );
+        console.log("New form Data", formData.uploadedFile);
 
         try {
           // Python Upload
           const response = await axios.post(
-            `https://kfa6a8ib1k.execute-api.us-east-1.amazonaws.com/v1/upload2?file_name=${formData.uploadedFile.name}`,
-            newFormData,
+            `https://kfa6a8ib1k.execute-api.us-east-1.amazonaws.com/v1/upload2?file_name=${uploadedFileName}`,
+            formData.uploadedFile,
             {
               headers: {
-                "Content-Type": "multipart/form-data",
+                "Content-Type": "application/pdf",
+                "Access-Control-Allow-Origin": "*",
               },
             }
           );
@@ -92,15 +122,26 @@ const DrivePage = () => {
             response
           );
 
+          // Find the Object Url
+          const urlWithQuotes = response.data.body;
+          const startIndex = urlWithQuotes.indexOf('"') + 1; // Find the index of the first double quote
+          const endIndex = urlWithQuotes.lastIndexOf('"'); // Find the index of the last double quote
+          const url = urlWithQuotes.substring(startIndex, endIndex); // Extract the URL between the double quotes
+
           // Send file to the database
           const databaseResponse = await axios.post(
             "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/save",
             {
-              FileName: "",
-              FileExtension: "",
+              FileName: uploadedFileName,
+              FileExtension: ".pdf",
               UserId: localStorage.getItem("E mail"),
-              ObjectURL: "",
+              ObjectURL: url,
             }
+          );
+
+          console.log(
+            "Successfully Upload it to the database",
+            databaseResponse.data
           );
           setShowModal(false);
           setFormData({ ...formData, uploadedFile: null });
@@ -144,20 +185,23 @@ const DrivePage = () => {
 
     try {
       let response;
+      let userId = localStorage.getItem("E mail");
       if (state === "Trash") {
-        response = await axios.get(
+        response = await axios.post(
           // Get All Trashed
-          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/getAllTrash"
+          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/getAllTrash/x",
+          { Id: userId }
         );
       } else if (state === "Starred") {
         // Get All Starred
-        response = await axios.get(
-          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/getStaredFiles"
+        response = await axios.post(
+          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/getStaredFiles",
+          { Id: userId }
         );
       } else {
         response = await axios.get(
           // Get All
-          "https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/getAll"
+          `https://eujoxqpsed.execute-api.us-east-1.amazonaws.com/prod/file/get-by-user/${userId}`
         );
       }
 
@@ -232,10 +276,12 @@ const DrivePage = () => {
 
   // Star or Unstar Files
   const StarById = async (id) => {
+    setFormData({ ...formData, loader: true });
     try {
       // Find the file by id
       const file = files.find((file) => file.FileName === id);
       if (!file) {
+        setFormData({ ...formData, loader: false });
         toast.error(`${file.NameOfTheFile} not found.`, {
           position: "top-right",
           autoClose: 3000,
@@ -267,6 +313,7 @@ const DrivePage = () => {
       }
       loadAllFiles();
     } catch (error) {
+      setFormData({ ...formData, loader: false });
       console.error("Error starring file:", error.message);
       // Handle the error here
     }
@@ -274,10 +321,12 @@ const DrivePage = () => {
 
   // Delete or Restore Files
   const DeleteById = async (id) => {
+    setFormData({ ...formData, loader: true });
     try {
       // Find the file by id
       const file = files.find((file) => file.FileName === id);
       if (!file) {
+        setFormData({ ...formData, loader: false });
         toast.error(`${file.NameOfTheFile} not found.`, {
           position: "top-right",
           autoClose: 3000,
@@ -309,6 +358,7 @@ const DrivePage = () => {
       }
       loadAllFiles();
     } catch (error) {
+      setFormData({ ...formData, loader: false });
       console.error("Error Deleting file:", error.message);
       // Handle the error here
     }
@@ -564,7 +614,7 @@ const DrivePage = () => {
                   {/* File Name */}
                   <p className="text-[14px] font-Poppins-Regular flex justify-center my-[15px] ">
                     {formData.uploadedFile
-                      ? formData.uploadedFile.name
+                      ? uploadedFileName
                       : " No file selected"}
                   </p>
 
