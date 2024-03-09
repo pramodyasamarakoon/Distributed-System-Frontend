@@ -18,6 +18,8 @@ import StarOutlineOutlinedIcon from "@mui/icons-material/StarOutlineOutlined";
 import RestoreOutlinedIcon from "@mui/icons-material/RestoreOutlined";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import StarIcon from "@mui/icons-material/Star";
+import pdf from "../../Assets/Images/Icons/pdf.png";
+import xls from "../../Assets/Images/Icons/xls.png";
 
 const DrivePage = () => {
   const [formData, setFormData] = useState({
@@ -44,11 +46,13 @@ const DrivePage = () => {
     if (modalRef.current && !modalRef.current.contains(event.target)) {
       setShowModal(false);
       setFormData({ ...formData, uploadedFile: null });
+      // setUploadedFileName("");
     }
   };
   const handleCancelClick = () => {
     setShowModal(false);
     setFormData({ ...formData, uploadedFile: null });
+    setUploadedFileName("");
   };
 
   //   Open account dialog box
@@ -242,22 +246,31 @@ const DrivePage = () => {
   // Search Function
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+
   const handleSearchInputChange = (e) => {
-    setSearchInput(e.target.value);
-    // Call your search function here
-    searchFiles(e.target.value);
+    // // setSearchInput(e.target.value);
+    // // Call your search function here
+    // let searchTerm = e.target.value;
+    // const filteredFiles = files.filter((file) => {
+    //   return file.NameOfTheFile.toLowerCase().includes(
+    //     searchTerm.toLowerCase()
+    //   );
+    // });
+    // setFiles(filteredFiles);
   };
   const searchFiles = (searchTerm) => {
-    if (searchTerm.trim() === "") {
-      // If search term is empty, show all files
-      setSearchResults(files);
-    } else {
-      // Otherwise, filter files based on search term
-      const filteredFiles = files.filter((file) => {
-        return file.FileName.toLowerCase().includes(searchTerm.toLowerCase());
-      });
-      setSearchResults(filteredFiles);
-    }
+    // if (searchTerm.trim() === "") {
+    //   // If search term is empty, show all files
+    //   setSearchResults(files);
+    // } else {
+    // Otherwise, filter files based on search term
+    const filteredFiles = files.filter((file) => {
+      return file.NameOfTheFile.toLowerCase().includes(
+        searchTerm.toLowerCase()
+      );
+    });
+    setSearchResults(filteredFiles);
+    // }
   };
 
   useEffect(() => {
@@ -753,7 +766,7 @@ const DrivePage = () => {
                       key={file.FileName}
                       id={file.FileName}
                       style={{
-                        padding: "10px",
+                        padding: "7px",
                         backgroundColor: "white",
                         color: "black",
                         borderRadius: "1rem",
@@ -763,6 +776,28 @@ const DrivePage = () => {
                         marginRight: "5px",
                       }}
                     >
+                      {/* File Logo */}
+                      <div
+                        style={{
+                          flex: 0.1,
+                          marginRight: "5px",
+                          marginLeft: "15px",
+                        }}
+                      >
+                        {file.FileExtension === ".pdf" ? (
+                          <img
+                            style={{ height: "22px", width: "22px" }}
+                            alt="PDF Logo"
+                            src={pdf}
+                          />
+                        ) : (
+                          <img
+                            style={{ height: "22px", width: "22px" }}
+                            alt="Excel Logo"
+                            src={xls}
+                          />
+                        )}
+                      </div>
                       {/* File Name */}
                       <div
                         style={{
