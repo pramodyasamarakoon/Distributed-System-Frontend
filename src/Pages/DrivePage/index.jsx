@@ -20,6 +20,7 @@ import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import StarIcon from "@mui/icons-material/Star";
 import pdf from "../../Assets/Images/Icons/pdf.png";
 import xls from "../../Assets/Images/Icons/xls.png";
+import upload from "../../Assets/Svg/upload.svg";
 
 const DrivePage = () => {
   const [formData, setFormData] = useState({
@@ -608,6 +609,14 @@ const DrivePage = () => {
                     Upload File
                   </p>
 
+                  <div className="flex justify-center items-center">
+                    <img
+                      src={upload}
+                      alt="Sign Up SVG"
+                      style={{ width: "200px", height: "200px" }}
+                    />
+                  </div>
+
                   {/* Upload Button */}
                   <Button
                     variant="contained"
@@ -615,7 +624,7 @@ const DrivePage = () => {
                     size="small"
                     component="label"
                     style={{
-                      marginTop: "60px",
+                      marginTop: "10px",
                       backgroundColor: "#1E1F6F",
                       color: "#FFFFFF",
                     }}
